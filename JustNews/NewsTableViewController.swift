@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  NewsTableViewController.swift
 //  JustNews
 //
 //  Created by Назар Жиленко on 10.02.2023.
@@ -7,13 +7,10 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class NewsTableViewController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+        navigationController?.navigationBar.prefersLargeTitles = true
     }
-
-
 }
-
