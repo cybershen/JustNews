@@ -12,18 +12,33 @@ import RxCocoa
 class NewsTableViewController: UITableViewController {
     
     let disposeBag = DisposeBag()
-    
-    private var articles: [Article] = []
+    private var articleListVM: ArticleListViewModel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .link
+        
         navigationController?.navigationBar.prefersLargeTitles = true
         
         fetchNews()
     }
     
+    private func fetchNews() {
+        URLRequest.load(resource: ArticlesList.all)
+            .subscribe(onNext: { [weak self] articlesList in
+                
+                let articles = articlesList?.articles
+                self?.articleListVM = ArticleListViewModel(articles!)
+                
+                DispatchQueue.main.async {
+                    self?.tableView.reloadData()
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return articles.count
+        return articleListVM == nil ? 0: articleListVM.articlesVM.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -31,30 +46,20 @@ class NewsTableViewController: UITableViewController {
             return UITableViewCell()
         }
         
-        cell.titleLabel.text = articles[indexPath.row].title
-        cell.descriptionLabel.text = articles[indexPath.row].description
+        let articleVM = articleListVM.articleAt(indexPath.row)
+        
+        articleVM.title.asDriver(onErrorJustReturn: "")
+            .drive(cell.titleLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        articleVM.description.asDriver(onErrorJustReturn: "")
+            .drive(cell.descriptionLabel.rx.text)
+            .disposed(by: disposeBag)
         
         return cell
     }
     
     override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
-    }
-    
-    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 100
-    }
-    
-    private func fetchNews() {
-        URLRequest.load(resource: ArticlesList.all)
-            .subscribe(onNext: { [weak self] result in
-                if let result = result {
-                    self?.articles = result.articles
-                    DispatchQueue.main.async {
-                        self?.tableView.reloadData()
-                    }
-                }
-            })
-            .disposed(by: disposeBag)
     }
 }
